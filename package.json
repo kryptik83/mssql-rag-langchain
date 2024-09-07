@@ -1,0 +1,29 @@
+{
+  "name": "openai-langchain",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "tsc": "tsc",
+    "build": "tsc --build",
+    "start": "tsc && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "@langchain/community": "^0.2.32",
+    "@langchain/openai": "^0.2.10",
+    "colors": "^1.4.0",
+    "dotenv": "^16.4.5",
+    "langchain": "^0.2.18",
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.7",
+    "@types/mssql": "^9.1.5",
+    "@types/node": "^22.5.4",
+    "typescript": "^5.5.4"
+  }
+}
