@@ -1,43 +1,15 @@
 import { SqlDatabase } from "langchain/sql_db";
 import { createSqlQueryChain, SqlDatabaseChain } from "langchain/chains/sql_db";
-import dotenv from "dotenv";
-import { DataSourceOptions, DataSource } from "typeorm";
-import msSqlDriver from "mssql";
-import { OpenAI } from "@langchain/openai";
-const { ConnectionPool } = msSqlDriver;
-dotenv.config();
+
+import openAi from "./src/config/open-ai.js";
+import msSqlDataSourceOptions from "./src/mssql-driver/sql-driver.js";
+import { testDbConnection } from "./src/utils/connection-tests.js";
 
 async function main() {
-  const sqlDataSource: DataSourceOptions = {
-    type: "mssql",
-    driver: msSqlDriver,
-    host: "localhost",
-    port: 1433,
-    username: "sa",
-    password: "admin@123",
-    database: "mydb",
-    schema: "dbo",
-    options: {
-      encrypt: false,
-      trustServerCertificate: true,
-    },
-  };
-
-  const db = new ConnectionPool(
-    "Server=localhost,1433;Database=mydb;User Id=sa;Password=admin@123;trustServerCertificate=true;"
-  );
-  await db.connect();
-
-  console.log(
-    (await db.query("select * from dbo.Movies")).recordset.map(
-      (a: { Name: string; Year: number }) => `${a.Name} (${a.Year})`
-    )
-  );
-
-  const ds: DataSource = new DataSource(sqlDataSource);
+  await testDbConnection();
 
   const langChaindb = await SqlDatabase.fromOptionsParams({
-    appDataSourceOptions: sqlDataSource,
+    appDataSourceOptions: msSqlDataSourceOptions,
   });
 
   const tableInfo: string = await langChaindb.getTableInfo();
@@ -45,19 +17,16 @@ async function main() {
 
   console.log(langChaindb.allTables.map((a: any) => a.tableName));
 
-  const openaiLlm = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    temperature: 0,
-  });
-
   const sqlDbChain = new SqlDatabaseChain({
-    llm: openaiLlm,
+    llm: openAi,
     database: langChaindb,
+    verbose: false,
   });
 
   const result = await sqlDbChain.invoke({
     query: "How many movies are there?",
   });
+  // const result = await sqlDbChain.run("How many movies are there?");
   console.log(result);
 }
 
