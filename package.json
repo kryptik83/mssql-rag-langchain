@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
+    "lint": "eslint . --ext .ts",
     "tsc": "tsc",
     "build": "tsc --build",
     "start": "tsc && node dist/index.js"
@@ -21,9 +22,14 @@
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
+    "@eslint/js": "^9.10.0",
     "@tsconfig/recommended": "^1.0.7",
+    "@types/eslint__js": "^8.42.3",
     "@types/mssql": "^9.1.5",
     "@types/node": "^22.5.4",
-    "typescript": "^5.5.4"
+    "eslint": "^9.10.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.5.0"
   }
 }
