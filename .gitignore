@@ -3,3 +3,5 @@ node_modules
 
 #ignore dist folder
 dist
+
+**/package-lock.json
