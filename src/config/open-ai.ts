@@ -1,4 +1,4 @@
-import { OpenAI } from '@langchain/openai';
+import { ChatOpenAI, OpenAI } from '@langchain/openai';
 import dotenv from 'dotenv';
 import Configuration from 'openai';
 dotenv.config();
@@ -12,4 +12,11 @@ const openAi = new OpenAI({
   temperature: 0
 });
 
-export default openAi;
+const chatOpenAi = new ChatOpenAI({
+  ...openAiConfig,
+  temperature: 0,
+  __includeRawResponse: false
+});
+
+export { chatOpenAi, openAi };
+
