@@ -1,9 +1,9 @@
 import msSqlDriver from "mssql";
-import { DataSourceOptions, DataSource } from "typeorm";
+import { DataSource, DataSourceOptions } from "typeorm";
 
 const msSqlDataSourceOptions: DataSourceOptions = {
   type: "mssql",
-  driver: msSqlDriver, //NOTE: this is key, langchainjs has a weird issue working with the ms-sql driver in the package, replacing driver
+  driver: msSqlDriver, // NOTE: this is key, langchainjs has a weird issue working with the ms-sql driver in the package, replacing driver
   host: "localhost",
   port: 1433,
   username: "sa",

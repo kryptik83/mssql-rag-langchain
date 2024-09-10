@@ -19,7 +19,7 @@ async function main() {
   const sqlDbChain = new SqlDatabaseChain({
     llm: openAi,
     database: langChaindb,
-    verbose: true
+    verbose: false
   });
 
   const questions: string[] = ['How many movies are there?', 'What is the highest rated movie?'];
@@ -27,7 +27,7 @@ async function main() {
     query: questions[1]
   });
   // const result = await sqlDbChain.run("How many movies are there?");
-  console.log(result);
+  console.log(result?.result);
 }
 
 main();
