@@ -1,9 +1,11 @@
-// import * as colors from 'colors';
-import { RunnableConfig } from '@langchain/core/runnables';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableConfig, RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables';
 import colors from 'colors';
-import { SqlDatabaseChain } from 'langchain/chains/sql_db';
+import { createSqlQueryChain, SqlDatabaseChain } from 'langchain/chains/sql_db';
 import { SqlDatabase } from 'langchain/sql_db';
 import * as readline from 'readline-sync';
+import { z } from 'zod';
 import { chatOpenAi } from './src/config/open-ai.js';
 import msSqlDataSourceOptions from './src/mssql-driver/sql-driver.js';
 import { testDbConnection } from './src/utils/connection-tests.js';
@@ -41,7 +43,7 @@ async function main(showDebug: boolean = false) {
       let output;
       if (userInput.toLowerCase() === 'exit') {
         output = 'Goodbye! If you have any more questions in the future, feel free to ask.';
-        console.log(colors.green('Bot: ') + output);
+        console.log(colors.green('Bot: ') + JSON.stringify(output));
         console.log();
         process.exit();
       }
@@ -60,4 +62,86 @@ async function main(showDebug: boolean = false) {
   }
 }
 
-main(false);
+async function mainLargeDatabase(showDebug: boolean = false) {
+  console.log(colors.bold.green('Chatbot for SQL RAG'));
+  console.log(process.env.OPENAI_API_KEY);
+
+  console.log(colors.bgWhite.bold.cyan('Configuring your bot'));
+  await testDbConnection(showDebug);
+
+  const dbToQuery = await SqlDatabase.fromOptionsParams({
+    appDataSourceOptions: msSqlDataSourceOptions
+  });
+
+  const Table = z.object({
+    names: z.array(z.string()).describe('Names of tables in SQL database')
+  });
+
+  const tableNames = dbToQuery.allTables.map(t => t.tableName).join('\n');
+
+  const system = `Return the names of ALL the SQL tables that MIGHT be relevant to the user question.
+The tables are:
+
+${tableNames}
+
+Remember to include ALL POTENTIALLY RELEVANT tables, even if you're not sure that they're needed.`;
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    ['system', system],
+    ['human', '{input}']
+  ]);
+  const tableChain = prompt.pipe(chatOpenAi.withStructuredOutput(Table));
+
+  const sqlQueryChain = await createSqlQueryChain({
+    llm: chatOpenAi,
+    db: dbToQuery,
+    dialect: 'mssql'
+  });
+
+  const tableGen2Chain = RunnableSequence.from([
+    {
+      input: i => i.names
+    },
+    tableChain
+  ]);
+
+  const fullDbChain = RunnablePassthrough.assign({
+    tableNamesToUse: tableGen2Chain
+  }).pipe(sqlQueryChain);
+
+  console.log(colors.bold.green('You can now ask questions using natural language to the bot'));
+
+  while (true) {
+    try {
+      const userInput = readline.question(colors.yellow('You: '));
+
+      let output;
+      if (userInput.toLowerCase() === 'exit') {
+        output = 'Goodbye! If you have any more questions in the future, feel free to ask.';
+        console.log(colors.green('Bot: ') + output);
+        console.log();
+        process.exit();
+      }
+
+      if (showDebug) {
+        console.log(
+          await tableChain.invoke({
+            input: userInput
+          })
+        );
+      }
+
+      output = await fullDbChain.invoke({
+        question: userInput
+      });
+
+      console.log(colors.gray('OpenAI: ') + output);
+      console.log(colors.green('Bot: ') + (await dbToQuery.run(output)));
+    } catch (error: any) {
+      console.error(colors.bgRed.white(error));
+    }
+  }
+}
+
+// main(false);
+mainLargeDatabase();

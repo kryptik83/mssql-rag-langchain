@@ -19,7 +19,8 @@
     "colors": "^1.4.0",
     "dotenv": "^16.4.5",
     "langchain": "^0.2.18",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.10.0",
