@@ -7,7 +7,7 @@ import { SqlDatabase } from 'langchain/sql_db';
 import * as readline from 'readline-sync';
 import { z } from 'zod';
 import { chatOpenAi } from './src/config/open-ai.js';
-import msSqlDataSourceOptions from './src/mssql-driver/sql-driver.js';
+import msSqlDataSourceOptions, { giaDataSourceOptions } from './src/mssql-driver/sql-driver.js';
 import { testDbConnection } from './src/utils/connection-tests.js';
 
 async function main(showDebug: boolean = false) {
@@ -146,10 +146,9 @@ async function mainQueryGia(showDebug: boolean = false) {
   console.log(colors.bold.green('Chatbot for SQL RAG'));
 
   console.log(colors.bgWhite.bold.cyan('Configuring your bot'));
-  await testDbConnection(showDebug);
 
-  const dbToQuery = await SqlDatabase.fromOptionsParams({
-    appDataSourceOptions: msSqlDataSourceOptions
+  const giaDb = await SqlDatabase.fromOptionsParams({
+    appDataSourceOptions: giaDataSourceOptions
   });
 
   const Table = z.object({
@@ -195,7 +194,7 @@ async function mainQueryGia(showDebug: boolean = false) {
 
   const sqlQueryChain = await createSqlQueryChain({
     llm: llm,
-    db: dbToQuery,
+    db: giaDb,
     dialect: 'mssql'
   });
 
@@ -225,9 +224,8 @@ async function mainQueryGia(showDebug: boolean = false) {
         question: userInput
       });
 
-      console.log(colors.gray('OpenAI: ') + output);
-      return;
-      console.log(colors.green('Bot: ') + (await dbToQuery.run(output)));
+      console.log(colors.gray('OpenAI: ' + output));
+      console.log(colors.green('Bot: ') + (await giaDb.run(output)));
     } catch (error: any) {
       console.error(colors.bgRed.white(error));
     }

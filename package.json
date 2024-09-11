@@ -19,6 +19,7 @@
     "colors": "^1.4.0",
     "dotenv": "^16.4.5",
     "langchain": "^0.2.18",
+    "mssql": "^10.0.4",
     "readline-sync": "^1.4.10",
     "typeorm": "^0.3.20",
     "zod": "^3.23.8"
