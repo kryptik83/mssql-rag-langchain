@@ -7,7 +7,7 @@ import { SqlDatabase } from 'langchain/sql_db';
 import * as readline from 'readline-sync';
 import { z } from 'zod';
 import { chatOpenAi } from './src/config/open-ai.js';
-import msSqlDataSourceOptions, { giaDataSourceOptions } from './src/mssql-driver/sql-driver.js';
+import { giaDataSourceOptions, msSqlDataSourceOptions } from './src/mssql-driver/sql-driver.js';
 import { testDbConnection } from './src/utils/connection-tests.js';
 
 async function main(showDebug: boolean = false) {
@@ -185,12 +185,12 @@ async function mainQueryGia(showDebug: boolean = false) {
     .pipe(llm.withStructuredOutput(Table)) // Stage 1 uses category prompt to get categories
     .pipe(getTables); // Stage 2 pipeline converts categories to table names
 
-   const tableChain = RunnableSequence.from([
-     {
-       input: (i: { question: string }) => i.question
-     },
-     categoryChain
-   ]);
+  const tableChain = RunnableSequence.from([
+    {
+      input: (i: { question: string }) => i.question
+    },
+    categoryChain
+  ]);
 
   const sqlQueryChain = await createSqlQueryChain({
     llm: llm,

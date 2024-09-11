@@ -16,9 +16,9 @@ const msSqlDataSourceOptions: DataSourceOptions = {
   }
 };
 
-export const msqlDataSource: DataSource = new DataSource(msSqlDataSourceOptions);
+const msqlDataSource: DataSource = new DataSource(msSqlDataSourceOptions);
 
-export const giaDataSourceOptions: DataSourceOptions = {
+const giaDataSourceOptions: DataSourceOptions = {
   type: 'mssql',
   driver: msSqlDriver, // NOTE: this is key, langchainjs has a weird issue working with the ms-sql driver in the package, replacing driver
   host: 'my-server-name',
@@ -33,4 +33,4 @@ export const giaDataSourceOptions: DataSourceOptions = {
   }
 };
 
-export default msSqlDataSourceOptions;
+export { giaDataSourceOptions, msqlDataSource, msSqlDataSourceOptions };
