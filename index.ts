@@ -30,36 +30,12 @@ async function main(showDebug: boolean = false) {
     verbose: false
   });
 
-  // const sqlQueryGeneratorChain = RunnableSequence.from([
-  //   RunnablePassthrough.assign({
-  //     schema: () => tableInfo
-  //   }),
-  //   chatOpenAi.generatePrompt,
-  //   chatOpenAi.bind({ stop: ['\n SQLResult:'] }),
-  //   new StringOutputParser()
-  // ]);
-
-  // const fullChain = RunnableSequence.from([
-  //   RunnablePassthrough.assign({
-  //     query: sqlQueryGeneratorChain
-  //   }),
-  //   {
-  //     schema: async () => tableInfo,
-  //     question: input => input.question,
-  //     query: input => input.query,
-  //     response: input => langChaindb.run(input.query)
-  //   },
-  //   chatOpenAi
-  // ]);
-
   // const chatHistory: any[] = [];
 
   console.log(colors.bold.green('You can now ask questions using natural language to the bot'));
 
   while (true) {
     try {
-      // const messages = chatHistory.map(([role, content]) => ({ role, content }));
-
       const userInput = readline.question(colors.yellow('You: '));
 
       let output;
@@ -79,7 +55,7 @@ async function main(showDebug: boolean = false) {
 
       console.log(colors.green('Bot: ') + output);
     } catch (error) {
-      // console.error(colors.bgRed.white(JSON.stringify(error)));
+      console.error(colors.bgRed.white(JSON.stringify(error)));
     }
   }
 }
