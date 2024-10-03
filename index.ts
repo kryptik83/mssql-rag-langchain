@@ -250,7 +250,9 @@ async function mainQueryGia(showDebug: boolean = false) {
       });
 
       console.log(colors.gray('OpenAI: ' + output));
-      console.log(colors.green('Bot: ') + (await dbSchemaToUse.run(output)));
+      const sqlOutputJson = (await dbSchemaToUse.run(output));
+      console.log(colors.green('Bot: '));
+      console.table(JSON.parse(sqlOutputJson?.toString() || '{}' ));
     } catch (error: any) {
       console.error(colors.bgRed.white(error));
     }
