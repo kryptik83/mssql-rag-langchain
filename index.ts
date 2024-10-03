@@ -184,14 +184,14 @@ async function mainQueryGia(showDebug: boolean = false) {
     for (const category of categories.names) {
       switch (category) {
         case 'Scope':
-          tables = tables.concat(['Alumni', 'AuditClient']);
+          tables = ['Alumni', 'AuditClient'];
           break;
         case 'User':
-          tables = tables.concat('GIAUser');
+          tables = ['GIAUser'];
           break;
         default:
         case 'Assessment':
-          tables = tables.concat('Assessment');
+          tables = ['Assessment'];
           break;
       }
     }
