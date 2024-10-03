@@ -14,12 +14,12 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@langchain/community": "^0.2.32",
-    "@langchain/openai": "^0.2.10",
+    "@langchain/community": "^0.3.4",
+    "@langchain/openai": "^0.3.5",
     "colors": "^1.4.0",
     "dotenv": "^16.4.5",
-    "langchain": "^0.2.18",
-    "mssql": "^10.0.4",
+    "langchain": "^0.3.2",
+    "mssql": "^10.0.1",
     "readline-sync": "^1.4.10",
     "typeorm": "^0.3.20",
     "zod": "^3.23.8"
