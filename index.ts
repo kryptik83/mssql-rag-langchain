@@ -5,6 +5,7 @@ import colors from 'colors';
 import { createSqlQueryChain, SqlDatabaseChain } from 'langchain/chains/sql_db';
 import { SqlDatabase } from 'langchain/sql_db';
 import * as readline from 'readline-sync';
+import { DataSourceOptions } from 'typeorm';
 import { z } from 'zod';
 import { chatOpenAi } from './src/config/open-ai.js';
 import { giaDataSourceOptions, msSqlDataSourceOptions } from './src/mssql-driver/sql-driver.js';
@@ -16,7 +17,7 @@ async function main(showDebug: boolean = false) {
   console.log(colors.bgWhite.bold.cyan('Configuring your bot'));
   await testDbConnection(showDebug);
 
-  const langChaindb = await SqlDatabase.fromOptionsParams({
+  const langChaindb: SqlDatabase = await SqlDatabase.fromOptionsParams({
     appDataSourceOptions: msSqlDataSourceOptions
   });
 
@@ -147,8 +148,15 @@ async function mainQueryGia(showDebug: boolean = false) {
 
   console.log(colors.bgWhite.bold.cyan('Configuring your bot'));
 
-  const giaDb = await SqlDatabase.fromOptionsParams({
+  const giaDb: SqlDatabase = await SqlDatabase.fromOptionsParams({
     appDataSourceOptions: giaDataSourceOptions
+  });
+
+  const giaDbSec: SqlDatabase = await SqlDatabase.fromOptionsParams({
+    appDataSourceOptions: {
+      ...giaDataSourceOptions,
+      schema: 'sec'
+    } as DataSourceOptions
   });
 
   const Table = z.object({
@@ -160,11 +168,13 @@ async function mainQueryGia(showDebug: boolean = false) {
   const categoryPrompt = ChatPromptTemplate.fromMessages([
     [
       'system',
-      `Return the names of the SQL tables that are relevant to the user question.
-  The tables are:
+      `Return the categories that are relevant to the user question.
+  The categories are:
   
   Assessment
-  Scope`
+  Scope
+  User
+  `
     ],
     ['human', '{input}']
   ]);
@@ -172,10 +182,17 @@ async function mainQueryGia(showDebug: boolean = false) {
   const getTables = (categories: z.infer<typeof Table>): string[] => {
     let tables: string[] = [];
     for (const category of categories.names) {
-      if (category === 'Scope') {
-        tables = tables.concat(['Alumni', 'AuditClient', 'ODSSI']);
-      } else if (category === 'Assessment') {
-        tables = tables.concat(['Assessment']);
+      switch (category) {
+        case 'Scope':
+          tables = tables.concat(['Alumni', 'AuditClient']);
+          break;
+        case 'User':
+          tables = tables.concat('GIAUser');
+          break;
+        default:
+        case 'Assessment':
+          tables = tables.concat('Assessment');
+          break;
       }
     }
     return tables;
@@ -192,16 +209,6 @@ async function mainQueryGia(showDebug: boolean = false) {
     categoryChain
   ]);
 
-  const sqlQueryChain = await createSqlQueryChain({
-    llm: llm,
-    db: giaDb,
-    dialect: 'mssql'
-  });
-
-  const fullDbChain = RunnablePassthrough.assign({
-    tableNamesToUse: tableChain
-  }).pipe(sqlQueryChain);
-
   console.log(colors.bold.green('You can now ask questions using natural language to the bot'));
 
   while (true) {
@@ -216,16 +223,34 @@ async function mainQueryGia(showDebug: boolean = false) {
         process.exit();
       }
 
+      const categoryChainOutput: string[] = await categoryChain.invoke({ input: userInput });
+      const tableChainOutput: string[] = await tableChain.invoke({ question: userInput });
+
       if (showDebug) {
-        console.log(await categoryChain.invoke({ input: userInput }));
+        console.log('Categories: ', colors.italic.magenta(categoryChainOutput.join(', ')));
+        console.log('Tables: ', colors.italic.magenta(tableChainOutput.join(', ')));
       }
+
+      const useSecSchema: boolean = categoryChainOutput.includes('GIAUser');
+
+      const dbSchemaToUse = useSecSchema ? giaDbSec : giaDb;
+
+      const sqlQueryChain = await createSqlQueryChain({
+        llm: llm,
+        db: dbSchemaToUse,
+        dialect: 'mssql'
+      });
+
+      const fullDbChain = RunnablePassthrough.assign({
+        tableNamesToUse: tableChain
+      }).pipe(sqlQueryChain);
 
       output = await fullDbChain.invoke({
         question: userInput
       });
 
       console.log(colors.gray('OpenAI: ' + output));
-      console.log(colors.green('Bot: ') + (await giaDb.run(output)));
+      console.log(colors.green('Bot: ') + (await dbSchemaToUse.run(output)));
     } catch (error: any) {
       console.error(colors.bgRed.white(error));
     }
